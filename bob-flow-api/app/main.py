@@ -1,10 +1,12 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import git
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from git.exc import GitCommandError
 
@@ -42,6 +44,17 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="BobFlow Git API", lifespan=lifespan)
+
+_cors_origins = os.environ.get(
+    "CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+).split(",")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in _cors_origins if origin.strip()],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.exception_handler(GitServiceError)
